@@ -29,6 +29,7 @@ build/
 
 # ===== Backend =====
 backend/node_modules/
+backend/firebase-admin.json
 
 # ===== Frontend =====
 frontend/node_modules/

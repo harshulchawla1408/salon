@@ -10,8 +10,10 @@
   },
   "dependencies": {
     "@headlessui/react": "^2.2.9",
+    "@hookform/resolvers": "^4.0.0",
     "axios": "^1.13.2",
     "clsx": "^2.1.1",
+    "firebase": "^12.7.0",
     "framer-motion": "^12.24.0",
     "lucide-react": "^0.562.0",
     "next": "16.1.1",
@@ -23,12 +25,9 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
-    "@types/node": "^20",
-    "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.1.1",
-    "tailwindcss": "^4",
-    "typescript": "^5"
+    "tailwindcss": "^4"
   }
 }
