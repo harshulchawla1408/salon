@@ -1,0 +1,41 @@
+# ===== OS / Editor =====
+.DS_Store
+.vscode/
+.idea/
+
+# ===== Logs =====
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ===== Environment files =====
+.env
+.env.local
+.env.production
+.env.development
+
+# ===== Node =====
+node_modules/
+npm-cache/
+.yarn/
+
+# ===== Next.js =====
+.next/
+out/
+build/
+.next_types/
+
+# ===== Backend =====
+backend/node_modules/
+
+# ===== Frontend =====
+frontend/node_modules/
+
+# ===== Coverage =====
+coverage/
+
+# ===== Misc =====
+*.pem
+*.key
