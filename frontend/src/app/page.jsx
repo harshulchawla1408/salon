@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { Ephesis } from "next/font/google";
+import api from "@/lib/api";
 
 const ephesis = Ephesis({
   weight: "400",
@@ -12,8 +13,10 @@ const ephesis = Ephesis({
 
 export default function HomePage() {
   const overlayRef = useRef(null);
-  const [animationStarted, setAnimationStarted] = useState(false);
+  const router = useRouter();
+
   const [lineIndex, setLineIndex] = useState(0);
+  const [status, setStatus] = useState("Checking authentication...");
 
   const taglineLines = [
     "Precision Grooming,",
@@ -21,52 +24,52 @@ export default function HomePage() {
     "On Your Time",
   ];
 
+  /* ------------------ ANIMATION ------------------ */
   useEffect(() => {
     const reduceMotion = window.matchMedia(
       "(prefers-reduced-motion: reduce)"
     ).matches;
 
     if (reduceMotion) {
-      setAnimationStarted(true);
       setLineIndex(taglineLines.length);
       return;
     }
 
-    const duration = 1750; // ~1.75 seconds
+    const duration = 1750;
     const start = performance.now();
-    setAnimationStarted(true);
 
     const animate = (time) => {
       const progress = Math.min((time - start) / duration, 1);
 
-      // Smooth easing function for premium feel
       const eased =
         progress < 0.5
           ? 4 * progress * progress * progress
           : 1 - Math.pow(-2 * progress + 2, 3) / 2;
 
       if (overlayRef.current) {
-        // Overlay slides from right (100%) to final position (0%)
-        // Starts off-screen right, slides in and stops at final position
         const translateX = 100 - eased * 100;
         overlayRef.current.style.transform = `translateX(${translateX}%)`;
       }
 
-      // Tagline slides in automatically with overlay-container (parent element)
-
-      // Animate lines appearing progressively
-      const linesToShow = Math.floor(eased * taglineLines.length);
-      setLineIndex(linesToShow);
+      setLineIndex(Math.floor(eased * taglineLines.length));
 
       if (progress < 1) {
         requestAnimationFrame(animate);
       } else {
         setLineIndex(taglineLines.length);
+      }
+    };
+
+    requestAnimationFrame(animate);
+  }, []);
+
+  /* ------------------ AUTH CHECK ------------------ */
+  useEffect(() => {
     async function checkAuth() {
       try {
         const res = await api.get("/auth/me");
-
         const role = res.data.role;
+
         setStatus(`Logged in as ${role}`);
 
         const dashboardMap = {
@@ -76,30 +79,29 @@ export default function HomePage() {
           receptionist: "/dashboard/receptionist",
         };
 
-        router.push(dashboardMap[role] || "/dashboard/user");
+        router.replace(dashboardMap[role] || "/dashboard/user");
       } catch (err) {
         setStatus("Not logged in");
       }
-    };
+    }
 
-    requestAnimationFrame(animate);
-  }, []);
+    checkAuth();
+  }, [router]);
 
   return (
     <div>
-      <h1>Urban Gabhru Salon</h1>
+      <h1 className={ephesis.className}>Urban Gabhru Salon</h1>
       <p>{status}</p>
 
       <hr style={{ margin: "24px 0", opacity: 0.2 }} />
 
-      <p>
-        This page is used only to verify authentication & role-based routing.
-      </p>
+      <p>This page is used only to verify authentication & role-based routing.</p>
 
       <ul>
         <li>User → /dashboard/user</li>
         <li>Barber → /dashboard/barber</li>
         <li>Admin → /dashboard/admin</li>
+        <li>Receptionist → /dashboard/receptionist</li>
       </ul>
     </div>
   );
