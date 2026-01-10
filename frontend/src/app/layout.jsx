@@ -1,4 +1,5 @@
 import "./globals.css";
+import LoginModal from "@/components/LoginModal";
 
 export const metadata = {
   title: "Urban Gabhru Salon",
@@ -29,6 +30,7 @@ export default function RootLayout({ children }) {
         </header>
 
         <main style={{ padding: "24px" }}>{children}</main>
+        <LoginModal />
       </body>
     </html>
   );

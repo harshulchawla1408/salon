@@ -11,8 +11,8 @@ import connectDB from "./config/db.js";
 import { verifyFirebaseToken } from "./middleware/verifyFirebaseToken.js";
 import { attachAppUser } from "./middleware/attachAppUser.js";
 import {
-  syncUserFromFirebase,
-  getActiveSession,
+  login,
+  getCurrentUser,
 } from "./controllers/authController.js";
 
 const app = express();
@@ -57,32 +57,20 @@ app.get("/health", (req, res) => {
   res.json({ status: "ok", timestamp: new Date().toISOString() });
 });
 
+// Login endpoint - verifies Firebase token and returns role
 app.post(
-  "/api/auth/sync",
+  "/api/auth/login",
   authLimiter,
   verifyFirebaseToken,
-  syncUserFromFirebase
+  login
 );
 
-app.get(
-  "/api/auth/session",
-  verifyFirebaseToken,
-  attachAppUser,
-  getActiveSession
-);
-
+// Get current user profile
 app.get(
   "/auth/me",
   verifyFirebaseToken,
   attachAppUser,
-  (req, res) => {
-    const user = req.appUser;
-    res.json({
-      id: user._id,
-      role: user.role,
-      phone: user.phoneNumber,
-    });
-  }
+  getCurrentUser
 );
 
 app.use((req, res) => {

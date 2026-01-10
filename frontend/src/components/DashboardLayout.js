@@ -15,14 +15,23 @@ export default function DashboardLayout({ children, requiredRole }) {
         const res = await api.get("/auth/me");
         const userData = res.data;
 
+        // Check if user has required role
         if (userData.role !== requiredRole) {
-          router.push("/");
+          // Redirect to correct dashboard based on role
+          const dashboardMap = {
+            admin: "/dashboard/admin",
+            barber: "/dashboard/barber",
+            user: "/dashboard/user",
+            receptionist: "/dashboard/receptionist",
+          };
+          router.push(dashboardMap[userData.role] || "/dashboard/user");
           return;
         }
 
         setUser(userData);
       } catch (err) {
         console.error("Auth verification failed:", err);
+        sessionStorage.removeItem("fbToken");
         router.push("/");
       } finally {
         setLoading(false);
@@ -49,7 +58,7 @@ export default function DashboardLayout({ children, requiredRole }) {
           <h1 className="text-xl font-semibold capitalize">
             {requiredRole} Dashboard
           </h1>
-          <p className="text-sm text-gray-500">{user.phone}</p>
+          <p className="text-sm text-gray-500">{user.phone || user.email || "N/A"}</p>
         </div>
       </header>
       <main className="max-w-7xl mx-auto px-4 py-6">{children}</main>

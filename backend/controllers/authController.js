@@ -1,56 +1,109 @@
 import User from "../models/User.js";
 
-const ensureAustralianNumber = (phoneNumber) => {
-  if (!phoneNumber?.startsWith("+61")) {
-    throw new Error("ONLY_AUSTRALIA");
-  }
-};
-
-export const syncUserFromFirebase = async (req, res, next) => {
+/**
+ * Login endpoint - Verifies Firebase token and syncs/creates MongoDB user
+ * This is called after Firebase authentication succeeds
+ * Returns the user's role for dashboard redirection
+ */
+export const login = async (req, res, next) => {
   try {
-    const { uid, phone_number: phoneNumber } = req.firebaseUser;
+    // Firebase user should already be attached by verifyFirebaseToken middleware
+    if (!req.firebaseUser || !req.firebaseUser.uid) {
+      return res.status(401).json({ 
+        message: "Firebase authentication required" 
+      });
+    }
 
-    ensureAustralianNumber(phoneNumber);
+    const { uid, email, phone_number: phoneNumber, name } = req.firebaseUser;
 
-    let user = await User.findOne({ firebaseUid: uid });
+    // Find existing user by Firebase UID
+    let user = await User.findOne({ uid });
 
     if (!user) {
-      user = await User.create({
-        firebaseUid: uid,
-        phoneNumber,
-      });
-    } else if (user.phoneNumber !== phoneNumber) {
-      user.phoneNumber = phoneNumber;
-      await user.save();
+      // Create new MongoDB user if doesn't exist
+      // Default role is 'user' unless predefined (admin/barber/receptionist)
+      // Predefined roles should be set manually in MongoDB by admin
+      try {
+        user = await User.create({
+          uid,
+          email: email || "",
+          phone: phoneNumber || "",
+          name: name || "",
+          role: "user",
+          isActive: true,
+        });
+        console.log(`✅ Created new MongoDB user for Firebase UID: ${uid}`);
+      } catch (createError) {
+        // Handle duplicate key errors
+        if (createError.code === 11000) {
+          // User might have been created between findOne and create
+          user = await User.findOne({ uid });
+          if (!user) {
+            throw createError;
+          }
+        } else {
+          throw createError;
+        }
+      }
+    } else {
+      // Update user info from Firebase if changed
+      const updates = {};
+      if (email && user.email !== email) {
+        updates.email = email;
+      }
+      if (phoneNumber && user.phone !== phoneNumber) {
+        updates.phone = phoneNumber;
+      }
+      if (name && user.name !== name) {
+        updates.name = name;
+      }
+      
+      if (Object.keys(updates).length > 0) {
+        Object.assign(user, updates);
+        await user.save();
+      }
     }
 
+    // Check if user is active
+    if (!user.isActive) {
+      return res.status(403).json({
+        message: "Account is deactivated. Please contact administrator.",
+      });
+    }
+
+    // Return only role for dashboard redirection
     return res.status(200).json({
-      user: {
-        id: user._id,
-        firebaseUid: user.firebaseUid,
-        phoneNumber: user.phoneNumber,
-        role: user.role,
-      },
+      role: user.role,
     });
   } catch (error) {
-    if (error.message === "ONLY_AUSTRALIA") {
-      return res
-        .status(400)
-        .json({ message: "Only Australian (+61) numbers are supported." });
+    console.error("Login error:", error);
+
+    // Handle MongoDB errors
+    if (error.name === "ValidationError") {
+      return res.status(400).json({
+        message: "Invalid user data",
+        errors: Object.values(error.errors).map(e => e.message),
+      });
     }
+
     return next(error);
   }
 };
 
-export const getActiveSession = async (req, res) => {
-  const user = req.appUser;
+/**
+ * Get current user session
+ * Returns full user profile
+ */
+export const getCurrentUser = async (req, res) => {
+  const user = req.user;
 
   return res.status(200).json({
-    user: {
-      id: user._id,
-      firebaseUid: user.firebaseUid,
-      phoneNumber: user.phoneNumber,
-      role: user.role,
-    },
+    id: user._id,
+    uid: user.uid,
+    name: user.name,
+    email: user.email,
+    phone: user.phone,
+    role: user.role,
+    isActive: user.isActive,
   });
 };

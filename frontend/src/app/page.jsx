@@ -16,9 +16,14 @@ export default function HomePage() {
         const role = res.data.role;
         setStatus(`Logged in as ${role}`);
 
-        if (role === "admin") router.push("/dashboard/admin");
-        else if (role === "barber") router.push("/dashboard/barber");
-        else router.push("/dashboard/user");
+        const dashboardMap = {
+          admin: "/dashboard/admin",
+          barber: "/dashboard/barber",
+          user: "/dashboard/user",
+          receptionist: "/dashboard/receptionist",
+        };
+
+        router.push(dashboardMap[role] || "/dashboard/user");
       } catch (err) {
         setStatus("Not logged in");
       }
@@ -39,9 +44,10 @@ export default function HomePage() {
       </p>
 
       <ul>
-        <li>User → /dashboard/user</li>
-        <li>Barber → /dashboard/barber</li>
         <li>Admin → /dashboard/admin</li>
+        <li>Barber → /dashboard/barber</li>
+        <li>User → /dashboard/user</li>
+        <li>Receptionist → /dashboard/receptionist</li>
       </ul>
     </div>
   );
