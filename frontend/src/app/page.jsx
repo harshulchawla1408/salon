@@ -1,14 +1,67 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import api from "@/lib/api";
+import { useEffect, useRef, useState } from "react";
+import Image from "next/image";
+import { Ephesis } from "next/font/google";
+
+const ephesis = Ephesis({
+  weight: "400",
+  subsets: ["latin"],
+  display: "swap",
+});
 
 export default function HomePage() {
-  const router = useRouter();
-  const [status, setStatus] = useState("Checking authentication...");
+  const overlayRef = useRef(null);
+  const [animationStarted, setAnimationStarted] = useState(false);
+  const [lineIndex, setLineIndex] = useState(0);
+
+  const taglineLines = [
+    "Precision Grooming,",
+    "Personalised Luxury,",
+    "On Your Time",
+  ];
 
   useEffect(() => {
+    const reduceMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)"
+    ).matches;
+
+    if (reduceMotion) {
+      setAnimationStarted(true);
+      setLineIndex(taglineLines.length);
+      return;
+    }
+
+    const duration = 1750; // ~1.75 seconds
+    const start = performance.now();
+    setAnimationStarted(true);
+
+    const animate = (time) => {
+      const progress = Math.min((time - start) / duration, 1);
+
+      // Smooth easing function for premium feel
+      const eased =
+        progress < 0.5
+          ? 4 * progress * progress * progress
+          : 1 - Math.pow(-2 * progress + 2, 3) / 2;
+
+      if (overlayRef.current) {
+        // Overlay slides from right (100%) to final position (0%)
+        // Starts off-screen right, slides in and stops at final position
+        const translateX = 100 - eased * 100;
+        overlayRef.current.style.transform = `translateX(${translateX}%)`;
+      }
+
+      // Tagline slides in automatically with overlay-container (parent element)
+
+      // Animate lines appearing progressively
+      const linesToShow = Math.floor(eased * taglineLines.length);
+      setLineIndex(linesToShow);
+
+      if (progress < 1) {
+        requestAnimationFrame(animate);
+      } else {
+        setLineIndex(taglineLines.length);
     async function checkAuth() {
       try {
         const res = await api.get("/auth/me");
@@ -27,10 +80,10 @@ export default function HomePage() {
       } catch (err) {
         setStatus("Not logged in");
       }
-    }
+    };
 
-    checkAuth();
-  }, [router]);
+    requestAnimationFrame(animate);
+  }, []);
 
   return (
     <div>
@@ -44,10 +97,9 @@ export default function HomePage() {
       </p>
 
       <ul>
-        <li>Admin → /dashboard/admin</li>
-        <li>Barber → /dashboard/barber</li>
         <li>User → /dashboard/user</li>
-        <li>Receptionist → /dashboard/receptionist</li>
+        <li>Barber → /dashboard/barber</li>
+        <li>Admin → /dashboard/admin</li>
       </ul>
     </div>
   );
