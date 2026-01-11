@@ -1,7 +1,7 @@
-# Urban Gabhru Salon - Dashboard Setup
+# Gabhu Look Salon - Dashboard Setup
 
 ## Overview
-Role-based dashboards for Urban Gabhru salon platform using Next.js App Router, Firebase Auth, and MongoDB Atlas.
+Role-based dashboards for Gabhu Look salon platform using Next.js App Router, Firebase Auth, and MongoDB Atlas.
 
 ## Dashboard Routes
 - `/dashboard/user` - Customer booking & history
@@ -33,16 +33,16 @@ src/
 ```
 
 ## Running Locally
-1. Start backend: `npm run dev` (port 5001)
+1. Start backend: `npm run dev` (port 5000)
 2. Start frontend: `npm run dev` (port 3000)
 3. Access dashboards based on user role
 
 ## Environment Variables
 Frontend (.env.local):
 - `NEXT_PUBLIC_FIREBASE_*` (Firebase config)
-- `NEXT_PUBLIC_API_BASE_URL=http://localhost:5001`
+- `NEXT_PUBLIC_API_BASE_URL=http://localhost:5000`
 
 Backend (.env):
-- `PORT=5001`
+- `PORT=5000`
 - `CLIENT_ORIGIN=http://localhost:3000`
 - `MONGODB_URI` (MongoDB Atlas connection string)

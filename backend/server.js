@@ -5,8 +5,6 @@ import helmet from "helmet";
 import hpp from "hpp";
 import morgan from "morgan";
 import rateLimit from "express-rate-limit";
-import xssClean from "xss-clean";
-
 import connectDB from "./config/db.js";
 import { verifyFirebaseToken } from "./middleware/verifyFirebaseToken.js";
 import { attachAppUser } from "./middleware/attachAppUser.js";
@@ -16,7 +14,7 @@ import {
 } from "./controllers/authController.js";
 
 const app = express();
-const port = process.env.PORT || 5001;
+const port = process.env.PORT || 5000;
 const allowedOrigins = process.env.CLIENT_ORIGIN
   ? process.env.CLIENT_ORIGIN.split(",").map((origin) => origin.trim())
   : ["http://localhost:3000"];
@@ -50,7 +48,6 @@ app.use(cors(corsOptions));
 app.use(helmet());
 app.use(hpp());
 app.use(express.json({ limit: "1mb" }));
-app.use(xssClean());
 app.use(morgan("dev"));
 
 app.get("/health", (req, res) => {

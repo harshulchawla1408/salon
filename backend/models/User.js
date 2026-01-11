@@ -17,10 +17,14 @@ const userSchema = new mongoose.Schema(
     email: {
       type: String,
       default: "",
+      index: true,
+      sparse: true,
     },
     phone: {
       type: String,
       default: "",
+      index: true,
+      sparse: true,
     },
     role: {
       type: String,
@@ -42,12 +46,11 @@ const userSchema = new mongoose.Schema(
   }
 );
 
-// Ensure createdAt is set on creation
-userSchema.pre("save", function (next) {
+// ✅ CORRECT: async-style hook WITHOUT next
+userSchema.pre("save", function () {
   if (this.isNew && !this.createdAt) {
     this.createdAt = new Date();
   }
-  next();
 });
 
 export default mongoose.models.User || mongoose.model("User", userSchema);

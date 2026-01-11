@@ -1,8 +1,8 @@
-import User from "../models/User.js";
+import { findOrCreateUser } from "../utils/userMatching.js";
 
 /**
  * Middleware to fetch MongoDB user using Firebase UID
- * Auto-creates user if not found (for walk-in customers or first-time login)
+ * Auto-creates user if not found using priority matching (uid → phone → email)
  * Attaches MongoDB user to req.user
  */
 export const attachAppUser = async (req, res, next) => {
@@ -14,56 +14,8 @@ export const attachAppUser = async (req, res, next) => {
       });
     }
 
-    const { uid, email, phone_number: phoneNumber, name } = req.firebaseUser;
-    
-    // Find existing user by Firebase UID
-    let user = await User.findOne({ uid });
-
-    if (!user) {
-      // Auto-create user if not found in MongoDB
-      // This ensures all authenticated users exist in MongoDB
-      // Default role is 'user' - admin/barber/receptionist roles should be set manually
-      try {
-        user = await User.create({
-          uid,
-          email: email || "",
-          phone: phoneNumber || "",
-          name: name || "",
-          role: "user", // Default role
-          isActive: true,
-        });
-        console.log(`✅ Auto-created MongoDB user for Firebase UID: ${uid}`);
-      } catch (createError) {
-        // Handle duplicate key errors (shouldn't happen with uid, but handle email/phone conflicts)
-        if (createError.code === 11000) {
-          // Try to find user by alternative unique field
-          user = await User.findOne({ uid });
-          if (!user) {
-            throw createError;
-          }
-        } else {
-          throw createError;
-        }
-      }
-    } else {
-      // Update user info from Firebase if changed
-      const updates = {};
-      if (email && user.email !== email) {
-        updates.email = email;
-      }
-      if (phoneNumber && user.phone !== phoneNumber) {
-        updates.phone = phoneNumber;
-      }
-      if (name && user.name !== name) {
-        updates.name = name;
-      }
-      
-      // Only update if there are changes
-      if (Object.keys(updates).length > 0) {
-        Object.assign(user, updates);
-        await user.save();
-      }
-    }
+    // Find or create user using priority matching (uid → phone → email)
+    const user = await findOrCreateUser(req.firebaseUser);
 
     // Check if user is active
     if (!user.isActive) {
@@ -83,6 +35,12 @@ export const attachAppUser = async (req, res, next) => {
       return res.status(400).json({
         message: "Invalid user data",
         errors: Object.values(error.errors).map(e => e.message),
+      });
+    }
+
+    if (error.code === 11000) {
+      return res.status(409).json({
+        message: "User account conflict. Please try again.",
       });
     }
 

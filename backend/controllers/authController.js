@@ -1,4 +1,4 @@
-import User from "../models/User.js";
+import { findOrCreateUser } from "../utils/userMatching.js";
 
 /**
  * Login endpoint - Verifies Firebase token and syncs/creates MongoDB user
@@ -14,55 +14,8 @@ export const login = async (req, res, next) => {
       });
     }
 
-    const { uid, email, phone_number: phoneNumber, name } = req.firebaseUser;
-
-    // Find existing user by Firebase UID
-    let user = await User.findOne({ uid });
-
-    if (!user) {
-      // Create new MongoDB user if doesn't exist
-      // Default role is 'user' unless predefined (admin/barber/receptionist)
-      // Predefined roles should be set manually in MongoDB by admin
-      try {
-        user = await User.create({
-          uid,
-          email: email || "",
-          phone: phoneNumber || "",
-          name: name || "",
-          role: "user",
-          isActive: true,
-        });
-        console.log(`✅ Created new MongoDB user for Firebase UID: ${uid}`);
-      } catch (createError) {
-        // Handle duplicate key errors
-        if (createError.code === 11000) {
-          // User might have been created between findOne and create
-          user = await User.findOne({ uid });
-          if (!user) {
-            throw createError;
-          }
-        } else {
-          throw createError;
-        }
-      }
-    } else {
-      // Update user info from Firebase if changed
-      const updates = {};
-      if (email && user.email !== email) {
-        updates.email = email;
-      }
-      if (phoneNumber && user.phone !== phoneNumber) {
-        updates.phone = phoneNumber;
-      }
-      if (name && user.name !== name) {
-        updates.name = name;
-      }
-      
-      if (Object.keys(updates).length > 0) {
-        Object.assign(user, updates);
-        await user.save();
-      }
-    }
+    // Find or create user using priority matching (uid → phone → email)
+    const user = await findOrCreateUser(req.firebaseUser);
 
     // Check if user is active
     if (!user.isActive) {
@@ -83,6 +36,12 @@ export const login = async (req, res, next) => {
       return res.status(400).json({
         message: "Invalid user data",
         errors: Object.values(error.errors).map(e => e.message),
+      });
+    }
+
+    if (error.code === 11000) {
+      return res.status(409).json({
+        message: "User account conflict. Please try again.",
       });
     }
 

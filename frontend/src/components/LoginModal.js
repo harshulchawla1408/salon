@@ -2,13 +2,19 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { auth, signInWithPhoneNumber, RecaptchaVerifier, GoogleAuthProvider, OAuthProvider } from "@/lib/firebase";
+import {
+  auth,
+  signInWithPhoneNumber,
+  RecaptchaVerifier,
+  GoogleAuthProvider,
+  OAuthProvider,
+  signInWithPopup, // ✅ IMPORTED
+} from "@/lib/firebase";
 import api from "@/lib/api";
 import { toAustralianE164 } from "@/lib/phone";
 
-export default function LoginModal() {
+export default function LoginModal({ isOpen, onClose }) {
   const router = useRouter();
-  const [isOpen, setIsOpen] = useState(true);
   const [step, setStep] = useState("phone");
   const [phone, setPhone] = useState("");
   const [otp, setOtp] = useState("");
@@ -17,39 +23,38 @@ export default function LoginModal() {
   const [confirmationResult, setConfirmationResult] = useState(null);
 
   useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const token = sessionStorage.getItem("fbToken");
-        if (!token) return;
-
-        const res = await api.get("/auth/me");
-        const userData = res.data;
-
-        const dashboardMap = {
-          admin: "/dashboard/admin",
-          barber: "/dashboard/barber",
-          user: "/dashboard/user",
-          receptionist: "/dashboard/receptionist",
-        };
-
-        router.push(dashboardMap[userData.role] || "/dashboard/user");
-        setIsOpen(false);
-      } catch (err) {
-        sessionStorage.removeItem("fbToken");
-      }
-    };
-
-    checkAuth();
-  }, [router]);
+    if (!isOpen) {
+      setStep("phone");
+      setPhone("");
+      setOtp("");
+      setError("");
+      setLoading(false);
+      setConfirmationResult(null);
+    }
+  }, [isOpen]);
 
   const initializeRecaptcha = () => {
     if (!window.recaptchaVerifier) {
-      window.recaptchaVerifier = new RecaptchaVerifier(auth, "recaptcha-container", {
-        size: "invisible",
-        callback: () => {},
-      });
+      window.recaptchaVerifier = new RecaptchaVerifier(
+        auth,
+        "recaptcha-container",
+        {
+          size: "invisible",
+          callback: () => {},
+        }
+      );
     }
   };
+
+  const handleClose = () => {
+    setError("");
+    setStep("phone");
+    setPhone("");
+    setOtp("");
+    setConfirmationResult(null);
+    onClose();
+  };
+  
 
   const handleSendOTP = async (e) => {
     e.preventDefault();
@@ -85,20 +90,10 @@ export default function LoginModal() {
       const idToken = await result.user.getIdToken();
 
       sessionStorage.setItem("fbToken", idToken);
+      await api.post("/api/auth/login");
 
-      // Login endpoint returns role for dashboard redirection
-      const res = await api.post("/api/auth/login");
-      const role = res.data.role;
-
-      const dashboardMap = {
-        admin: "/dashboard/admin",
-        barber: "/dashboard/barber",
-        user: "/dashboard/user",
-        receptionist: "/dashboard/receptionist",
-      };
-
-      router.push(dashboardMap[role] || "/dashboard/user");
-      setIsOpen(false);
+      onClose();
+      router.push("/auth-redirect");
     } catch (err) {
       setError(err.response?.data?.message || err.message || "Invalid OTP");
       sessionStorage.removeItem("fbToken");
@@ -107,67 +102,49 @@ export default function LoginModal() {
     }
   };
 
+  // ✅ FIXED GOOGLE SIGN-IN
   const handleGoogleSignIn = async () => {
     setError("");
     setLoading(true);
 
     try {
       const provider = new GoogleAuthProvider();
-      const result = await auth.signInWithPopup(provider);
+      const result = await signInWithPopup(auth, provider); // ✅ FIX
       const idToken = await result.user.getIdToken();
 
       sessionStorage.setItem("fbToken", idToken);
+      await api.post("/api/auth/login");
 
-      // Login endpoint returns role for dashboard redirection
-      const res = await api.post("/api/auth/login");
-      const role = res.data.role;
-
-      const dashboardMap = {
-        admin: "/dashboard/admin",
-        barber: "/dashboard/barber",
-        user: "/dashboard/user",
-        receptionist: "/dashboard/receptionist",
-      };
-
-      router.push(dashboardMap[role] || "/dashboard/user");
-      setIsOpen(false);
+      onClose();
+      router.push("/auth-redirect");
     } catch (err) {
-      setError(err.response?.data?.message || err.message || "Google sign-in failed");
+      setError(err.message || "Google sign-in failed");
       sessionStorage.removeItem("fbToken");
     } finally {
       setLoading(false);
     }
   };
 
+  // ✅ FIXED APPLE SIGN-IN
   const handleAppleSignIn = async () => {
     setError("");
     setLoading(true);
 
     try {
-      const provider = new OAuthProvider('apple.com');
-      provider.addScope('email');
-      provider.addScope('name');
-      
-      const result = await auth.signInWithPopup(provider);
+      const provider = new OAuthProvider("apple.com");
+      provider.addScope("email");
+      provider.addScope("name");
+
+      const result = await signInWithPopup(auth, provider); // ✅ FIX
       const idToken = await result.user.getIdToken();
 
       sessionStorage.setItem("fbToken", idToken);
+      await api.post("/api/auth/login");
 
-      // Login endpoint returns role for dashboard redirection
-      const res = await api.post("/api/auth/login");
-      const role = res.data.role;
-
-      const dashboardMap = {
-        admin: "/dashboard/admin",
-        barber: "/dashboard/barber",
-        user: "/dashboard/user",
-        receptionist: "/dashboard/receptionist",
-      };
-
-      router.push(dashboardMap[role] || "/dashboard/user");
-      setIsOpen(false);
+      onClose();
+      router.push("/auth-redirect");
     } catch (err) {
-      setError(err.response?.data?.message || err.message || "Apple sign-in failed");
+      setError(err.message || "Apple sign-in failed");
       sessionStorage.removeItem("fbToken");
     } finally {
       setLoading(false);
@@ -177,13 +154,30 @@ export default function LoginModal() {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60 backdrop-blur-sm">
-      <div className="bg-gray-900 text-white rounded-2xl p-8 w-full max-w-md shadow-2xl border border-gray-800">
-        <div className="text-center mb-8">
-          <h2 className="text-3xl font-bold mb-2">Urban Gabhru</h2>
-          <p className="text-gray-400">
-            {step === "phone" ? "Enter your mobile number" : "Enter the OTP sent to your phone"}
-          </p>
+    <div 
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60 backdrop-blur-sm"
+      onClick={handleClose}
+    >
+      <div 
+        className="bg-gray-900 text-white rounded-2xl p-8 w-full max-w-md shadow-2xl border border-gray-800"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex justify-between items-center mb-6">
+          <div className="text-center flex-1">
+            <h2 className="text-3xl font-bold mb-2">Gabhru Look</h2>
+            <p className="text-gray-400">
+              {step === "phone" ? "Enter your mobile number" : "Enter the OTP sent to your phone"}
+            </p>
+          </div>
+          <button
+            onClick={handleClose}
+            className="text-gray-400 hover:text-white transition-colors ml-4"
+            aria-label="Close modal"
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
         </div>
 
         {step === "phone" ? (

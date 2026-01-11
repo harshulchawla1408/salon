@@ -1,7 +1,7 @@
-# Urban Gabhru - Login Modal Implementation
+# Gabru Look - Login Modal Implementation
 
 ## Overview
-Professional auto-popup login modal with Firebase Phone OTP authentication for Urban Gabhru salon platform.
+Professional auto-popup login modal with Firebase Phone OTP authentication for Gabru Look salon platform.
 
 ## Features
 - **Auto-popup**: Modal appears automatically on page load
@@ -62,5 +62,5 @@ NEXT_PUBLIC_FIREBASE_PROJECT_ID=...
 NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=...
 NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=...
 NEXT_PUBLIC_FIREBASE_APP_ID=...
-NEXT_PUBLIC_API_BASE_URL=http://localhost:5001
+NEXT_PUBLIC_API_BASE_URL=http://localhost:5000
 ```
