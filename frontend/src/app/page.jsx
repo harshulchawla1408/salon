@@ -1,5 +1,5 @@
 import HeroSection from "./(home)/HeroSection";
-import AboutSection from "./(home)/AboutSection";
+import WhyChooseUs from "./(home)/WhyChooseUs";
 import ServicesSection from "./(home)/ServicesSection";
 import TestimonialsSection from "./(home)/TestimonialsSection";
 import ContactSection from "./(home)/ContactSection";
@@ -8,8 +8,8 @@ export default function HomePage() {
   return (
     <>
       <HeroSection />
-      <AboutSection />
       <ServicesSection />
+      <WhyChooseUs />
       <TestimonialsSection />
       <ContactSection />
     </>
