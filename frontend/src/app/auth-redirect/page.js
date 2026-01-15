@@ -2,42 +2,32 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import api from "@/lib/api";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function AuthRedirectPage() {
   const router = useRouter();
+  const { user, loading } = useAuth();
   const [isRedirecting, setIsRedirecting] = useState(true);
 
   useEffect(() => {
-    const redirectToDashboard = async () => {
-      try {
-        const res = await api.get("/auth/me");
-        const role = res.data?.role;
+    if (loading) return;
 
-        if (!role) {
-          throw new Error("No role found");
-        }
+    if (user?.role) {
+      const dashboardMap = {
+        admin: "/dashboard/admin",
+        barber: "/dashboard/barber",
+        user: "/dashboard/user",
+        receptionist: "/dashboard/receptionist",
+      };
 
-        const dashboardMap = {
-          admin: "/dashboard/admin",
-          barber: "/dashboard/barber",
-          user: "/dashboard/user",
-          receptionist: "/dashboard/receptionist",
-        };
-
-        const dashboardPath = dashboardMap[role] || "/dashboard/user";
-        router.replace(dashboardPath);
-      } catch (err) {
-        // If auth fails, clear token and redirect to home
-        sessionStorage.removeItem("fbToken");
-        router.replace("/");
-      } finally {
-        setIsRedirecting(false);
-      }
-    };
-
-    redirectToDashboard();
-  }, [router]);
+      const dashboardPath = dashboardMap[user.role] || "/dashboard/user";
+      router.replace(dashboardPath);
+    } else {
+      // No user, redirect to home
+      router.replace("/");
+    }
+    setIsRedirecting(false);
+  }, [user, loading, router]);
 
   // User should never see this UI - redirect happens immediately
   // Show minimal loading state only if redirect is delayed

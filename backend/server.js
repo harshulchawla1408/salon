@@ -11,7 +11,33 @@ import { attachAppUser } from "./middleware/attachAppUser.js";
 import {
   login,
   getCurrentUser,
+  logout,
 } from "./controllers/authController.js";
+import {
+  getServices,
+  getService,
+  createService,
+  updateService,
+} from "./controllers/serviceController.js";
+import {
+  getBarbers,
+  getBarbersWithAvailability,
+  getBarberAvailability,
+  setBarberAvailability,
+} from "./controllers/availabilityController.js";
+import {
+  createBooking,
+  getUserBookings,
+  getBarberBookings,
+  cancelBooking,
+  completeBooking,
+} from "./controllers/bookingController.js";
+import {
+  getUsers,
+  updateUserRole,
+  updateUser,
+} from "./controllers/userController.js";
+import { requireRole } from "./middleware/requireRole.js";
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -68,6 +94,138 @@ app.get(
   verifyFirebaseToken,
   attachAppUser,
   getCurrentUser
+);
+
+// Logout endpoint
+app.post(
+  "/api/auth/logout",
+  verifyFirebaseToken,
+  attachAppUser,
+  logout
+);
+
+// ==================== SERVICES ====================
+// Get all services (public)
+app.get("/api/services", getServices);
+
+// Get single service (public)
+app.get("/api/services/:id", getService);
+
+// Create service (Admin only)
+app.post(
+  "/api/services",
+  verifyFirebaseToken,
+  attachAppUser,
+  requireRole("admin"),
+  createService
+);
+
+// Update service (Admin only)
+app.patch(
+  "/api/services/:id",
+  verifyFirebaseToken,
+  attachAppUser,
+  requireRole("admin"),
+  updateService
+);
+
+// ==================== BARBERS ====================
+// Get all barbers (public)
+app.get("/api/barbers", getBarbers);
+
+// Get barbers with availability (Receptionist/Admin)
+app.get(
+  "/api/barbers/with-availability",
+  verifyFirebaseToken,
+  attachAppUser,
+  requireRole("receptionist", "admin"),
+  getBarbersWithAvailability
+);
+
+// ==================== AVAILABILITY ====================
+// Get barber availability (public)
+app.get("/api/availability/:barberId", getBarberAvailability);
+
+// Set barber availability (Barber or Admin)
+app.post(
+  "/api/availability",
+  verifyFirebaseToken,
+  attachAppUser,
+  requireRole("barber", "admin"),
+  setBarberAvailability
+);
+
+// ==================== BOOKINGS ====================
+// Create booking (User or Receptionist)
+app.post(
+  "/api/bookings",
+  verifyFirebaseToken,
+  attachAppUser,
+  requireRole("user", "receptionist"),
+  createBooking
+);
+
+// Get user's bookings
+app.get(
+  "/api/bookings",
+  verifyFirebaseToken,
+  attachAppUser,
+  requireRole("user", "receptionist", "admin"),
+  getUserBookings
+);
+
+// Get barber's bookings
+app.get(
+  "/api/bookings/barber/:barberId",
+  verifyFirebaseToken,
+  attachAppUser,
+  requireRole("barber", "admin", "receptionist"),
+  getBarberBookings
+);
+
+// Cancel booking
+app.patch(
+  "/api/bookings/:id/cancel",
+  verifyFirebaseToken,
+  attachAppUser,
+  cancelBooking
+);
+
+// Complete booking (Barber only)
+app.patch(
+  "/api/bookings/:id/complete",
+  verifyFirebaseToken,
+  attachAppUser,
+  requireRole("barber", "admin"),
+  completeBooking
+);
+
+// ==================== USERS (Admin only) ====================
+// Get all users
+app.get(
+  "/api/users",
+  verifyFirebaseToken,
+  attachAppUser,
+  requireRole("admin"),
+  getUsers
+);
+
+// Update user role
+app.patch(
+  "/api/users/:id/role",
+  verifyFirebaseToken,
+  attachAppUser,
+  requireRole("admin"),
+  updateUserRole
+);
+
+// Update user
+app.patch(
+  "/api/users/:id",
+  verifyFirebaseToken,
+  attachAppUser,
+  requireRole("admin"),
+  updateUser
 );
 
 app.use((req, res) => {

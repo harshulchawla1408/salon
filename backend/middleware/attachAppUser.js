@@ -24,6 +24,14 @@ export const attachAppUser = async (req, res, next) => {
       });
     }
 
+    // Verify session token matches (prevent multiple active sessions)
+    const token = req.headers.authorization?.replace("Bearer ", "").trim();
+    if (user.activeSessionToken && user.activeSessionToken !== token) {
+      return res.status(401).json({
+        message: "Another session is active. Please logout and login again.",
+      });
+    }
+
     // Attach MongoDB user to request
     req.user = user;
     return next();

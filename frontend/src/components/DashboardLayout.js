@@ -1,55 +1,40 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import api from "@/lib/api";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function DashboardLayout({ children, requiredRole }) {
   const router = useRouter();
-  const [loading, setLoading] = useState(true);
-  const [user, setUser] = useState(null);
+  const { user, loading, isAuthenticated } = useAuth();
 
   useEffect(() => {
-    const verify = async () => {
-      try {
-        const res = await api.get("/auth/me");
-        const userData = res.data;
+    // Redirect if not authenticated
+    if (!loading && !isAuthenticated) {
+      router.push("/");
+      return;
+    }
 
-        // Check if user has required role
-        if (userData.role !== requiredRole) {
-          // Redirect to correct dashboard based on role
-          const dashboardMap = {
-            admin: "/dashboard/admin",
-            barber: "/dashboard/barber",
-            user: "/dashboard/user",
-            receptionist: "/dashboard/receptionist",
-          };
-          router.push(dashboardMap[userData.role] || "/dashboard/user");
-          return;
-        }
+    // Redirect if role mismatch
+    if (!loading && user && user.role !== requiredRole) {
+      const dashboardMap = {
+        admin: "/dashboard/admin",
+        barber: "/dashboard/barber",
+        user: "/dashboard/user",
+        receptionist: "/dashboard/receptionist",
+      };
+      router.push(dashboardMap[user.role] || "/dashboard/user");
+      return;
+    }
+  }, [user, loading, isAuthenticated, requiredRole, router]);
 
-        setUser(userData);
-      } catch (err) {
-        console.error("Auth verification failed:", err);
-        sessionStorage.removeItem("fbToken");
-        router.push("/");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    verify();
-  }, [requiredRole, router]);
-
-  if (loading) {
+  if (loading || !user) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <p>Loading...</p>
       </div>
     );
   }
-
-  if (!user) return null;
 
   return (
     <div className="min-h-screen bg-gray-50">

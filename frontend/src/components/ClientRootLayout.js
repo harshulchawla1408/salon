@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { AuthProvider } from "@/contexts/AuthContext";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import LoginModal from "@/components/LoginModal";
@@ -21,11 +22,11 @@ export default function ClientRootLayout({ children }) {
   };
 
   return (
-    <>
+    <AuthProvider>
       <Header onLoginClick={handleLoginClick} onBookNowClick={handleBookNowClick} />
       <main>{children}</main>
       <Footer />
       <LoginModal isOpen={isLoginModalOpen} onClose={handleCloseLoginModal} />
-    </>
+    </AuthProvider>
   );
 }

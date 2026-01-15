@@ -5,16 +5,18 @@ import { useRouter } from "next/navigation";
 import {
   auth,
   signInWithPhoneNumber,
-  RecaptchaVerifier,
   GoogleAuthProvider,
   OAuthProvider,
-  signInWithPopup, // ✅ IMPORTED
+  signInWithPopup,
 } from "@/lib/firebase";
 import api from "@/lib/api";
 import { toAustralianE164 } from "@/lib/phone";
+import { useAuth } from "@/contexts/AuthContext";
+import { initializeRecaptcha, clearRecaptcha } from "@/lib/recaptcha";
 
 export default function LoginModal({ isOpen, onClose }) {
   const router = useRouter();
+  const { login, refreshAuth } = useAuth();
   const [step, setStep] = useState("phone");
   const [phone, setPhone] = useState("");
   const [otp, setOtp] = useState("");
@@ -30,21 +32,29 @@ export default function LoginModal({ isOpen, onClose }) {
       setError("");
       setLoading(false);
       setConfirmationResult(null);
+      // Clear reCAPTCHA when modal closes (prevents reCAPTCHA error on next login)
+      if (typeof window !== "undefined") {
+        import("@/lib/recaptcha").then(({ clearRecaptcha }) => {
+          clearRecaptcha();
+        });
+      }
     }
   }, [isOpen]);
 
-  const initializeRecaptcha = () => {
-    if (!window.recaptchaVerifier) {
-      window.recaptchaVerifier = new RecaptchaVerifier(
-        auth,
-        "recaptcha-container",
-        {
-          size: "invisible",
-          callback: () => {},
+  // Ensure recaptcha container exists when modal opens
+  useEffect(() => {
+    if (isOpen && step === "phone") {
+      // Ensure container exists
+      if (typeof window !== "undefined") {
+        let container = document.getElementById("recaptcha-container");
+        if (!container) {
+          container = document.createElement("div");
+          container.id = "recaptcha-container";
+          document.body.appendChild(container);
         }
-      );
+      }
     }
-  };
+  }, [isOpen, step]);
 
   const handleClose = () => {
     setError("");
@@ -63,18 +73,25 @@ export default function LoginModal({ isOpen, onClose }) {
 
     try {
       const phoneNumber = toAustralianE164(phone);
-      initializeRecaptcha();
+      
+      // Initialize reCAPTCHA (singleton)
+      const verifier = initializeRecaptcha();
+      if (!verifier) {
+        throw new Error("Failed to initialize reCAPTCHA. Please refresh the page.");
+      }
 
       const result = await signInWithPhoneNumber(
         auth,
         phoneNumber,
-        window.recaptchaVerifier
+        verifier
       );
 
       setConfirmationResult(result);
       setStep("otp");
     } catch (err) {
       setError(err.message || "Failed to send OTP");
+      // Clear reCAPTCHA on error
+      clearRecaptcha();
     } finally {
       setLoading(false);
     }
@@ -91,6 +108,9 @@ export default function LoginModal({ isOpen, onClose }) {
 
       sessionStorage.setItem("fbToken", idToken);
       await api.post("/api/auth/login");
+      
+      // Refresh auth context
+      await refreshAuth();
 
       onClose();
       router.push("/auth-redirect");
@@ -114,6 +134,9 @@ export default function LoginModal({ isOpen, onClose }) {
 
       sessionStorage.setItem("fbToken", idToken);
       await api.post("/api/auth/login");
+      
+      // Refresh auth context
+      await refreshAuth();
 
       onClose();
       router.push("/auth-redirect");
@@ -140,6 +163,9 @@ export default function LoginModal({ isOpen, onClose }) {
 
       sessionStorage.setItem("fbToken", idToken);
       await api.post("/api/auth/login");
+      
+      // Refresh auth context
+      await refreshAuth();
 
       onClose();
       router.push("/auth-redirect");

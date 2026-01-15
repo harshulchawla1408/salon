@@ -7,6 +7,7 @@ import {
   signInWithPopup,
   signInWithPhoneNumber,
   RecaptchaVerifier,
+  signOut,
 } from "firebase/auth";
 
 const firebaseConfig = {
@@ -22,7 +23,7 @@ const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 
 export const auth = getAuth(app);
 
-// providers & helpers (UNCHANGED)
+// providers & helpers
 export {
   GoogleAuthProvider,
   OAuthProvider,
@@ -30,6 +31,7 @@ export {
   signInWithCredential,
   signInWithPhoneNumber,
   RecaptchaVerifier,
+  signOut,
 };
 
 export default app;

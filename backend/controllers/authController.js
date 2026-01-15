@@ -1,4 +1,5 @@
 import { findOrCreateUser } from "../utils/userMatching.js";
+import User from "../models/User.js";
 
 /**
  * Login endpoint - Verifies Firebase token and syncs/creates MongoDB user
@@ -23,6 +24,12 @@ export const login = async (req, res, next) => {
         message: "Account is deactivated. Please contact administrator.",
       });
     }
+
+    // Update active session token (invalidate previous session)
+    // Get token from Authorization header
+    const token = req.headers.authorization?.replace("Bearer ", "").trim();
+    user.activeSessionToken = token;
+    await user.save();
 
     // Return only role for dashboard redirection
     return res.status(200).json({
@@ -65,4 +72,22 @@ export const getCurrentUser = async (req, res) => {
     role: user.role,
     isActive: user.isActive,
   });
+};
+
+/**
+ * Logout endpoint - Clear active session token
+ */
+export const logout = async (req, res, next) => {
+  try {
+    const user = req.user;
+    user.activeSessionToken = null;
+    await user.save();
+
+    return res.status(200).json({
+      message: "Logged out successfully",
+    });
+  } catch (error) {
+    console.error("Logout error:", error);
+    return next(error);
+  }
 };

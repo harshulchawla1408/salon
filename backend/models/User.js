@@ -36,6 +36,11 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+    activeSessionToken: {
+      type: String,
+      default: null,
+      index: true,
+    },
     createdAt: {
       type: Date,
       default: Date.now,

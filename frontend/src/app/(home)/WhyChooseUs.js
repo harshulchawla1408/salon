@@ -435,7 +435,7 @@ export default function WhyChooseUs() {
           playsInline
           preload="auto"
         >
-          <source src="/WhyChooseUs_VIdeo.mp4" type="video/mp4" />
+          <source src="/salon.mp4" type="video/mp4" />
           Your browser does not support the video tag.
         </video>
 

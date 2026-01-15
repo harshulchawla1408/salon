@@ -155,7 +155,45 @@ function TestimonialCard({ testimonial, index, isVisible }) {
     </>
   );
 }
+function AnimatedImageGrid({ src, isVisible }) {
+    const rows = 6;
+    const cols = 8;
+    const total = rows * cols;
 
+    return (
+      <div
+        className="image-grid"
+        style={{
+          display: "grid",
+          gridTemplateColumns: `repeat(${cols}, 1fr)`,
+          gridTemplateRows: `repeat(${rows}, 1fr)`,
+          position: "absolute",
+          inset: 0,
+          zIndex: 0,
+        }}
+      >
+        {Array.from({ length: total }).map((_, i) => {
+          const x = (i % cols) * (100 / (cols - 1));
+          const y = Math.floor(i / cols) * (100 / (rows - 1));
+
+          return (
+            <div
+              key={i}
+              style={{
+                backgroundImage: `url(${src})`,
+                backgroundSize: `${cols * 100}% ${rows * 100}%`,
+                backgroundPosition: `${x}% ${y}%`,
+                transition: "opacity 1s ease, transform 1s ease",
+                opacity: isVisible ? 1 : 0,
+                transform: isVisible ? "scale(1)" : "scale(0.85)",
+                transitionDelay: `${i * 0.02}s`,
+              }}
+            />
+          );
+        })}
+      </div>
+    );
+  }
 export default function TestimonialsSection() {
   const sectionRef = useRef(null);
   const [isVisible, setIsVisible] = useState(false);
@@ -173,9 +211,7 @@ export default function TestimonialsSection() {
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            setIsVisible(true);
-          }
+        setIsVisible(entry.isIntersecting);
         });
       },
       {
@@ -351,15 +387,11 @@ export default function TestimonialsSection() {
           <div className="testimonials-layout">
             <div className="image-column">
               <div className="image-wrapper">
-                <Image
+                <AnimatedImageGrid
                   src="/testrimonial.jpg"
-                  alt="Luxury salon client experience"
-                  fill
-                  className="section-image"
-                  sizes="(max-width: 1024px) 100vw, 50vw"
-                  quality={90}
-                  priority
+                  isVisible={isVisible}
                 />
+
                 <div className="image-overlay" />
                 <h2 className="image-title">Client Testimonials</h2>
               </div>
