@@ -64,7 +64,7 @@ export default function Header({ onLoginClick, onBookNowClick }) {
          <Link href="/aboutUs">About Us</Link>
           <a href="#services">Services</a>
           <a href="#shop">E-Shop</a>
-          <a href="#contact">Contact</a>
+          <Link href="/contactUs">Contact</Link>
         </nav>
         {isAuthenticated ? (
           <>
