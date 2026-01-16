@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import BookingFlow from "@/components/BookingFlow";
+import Link from "next/link";
 
 export default function Header({ onLoginClick, onBookNowClick }) {
   const router = useRouter();
@@ -60,7 +61,7 @@ export default function Header({ onLoginClick, onBookNowClick }) {
       <div className="header-right">
         <nav className="nav-links">
           <a href="#home">Home</a>
-          <a href="#about">About Us</a>
+         <Link href="/aboutUs">About Us</Link>
           <a href="#services">Services</a>
           <a href="#shop">E-Shop</a>
           <a href="#contact">Contact</a>

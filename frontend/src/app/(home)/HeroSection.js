@@ -26,6 +26,9 @@ export default function HeroSection() {
 
     if (reduceMotion) {
       setLineIndex(taglineLines.length);
+      if (overlayRef.current) {
+        overlayRef.current.style.transform = "translateX(0%)";
+      }
       return;
     }
 
@@ -45,12 +48,16 @@ export default function HeroSection() {
         overlayRef.current.style.transform = `translateX(${translateX}%)`;
       }
 
-      setLineIndex(Math.floor(eased * taglineLines.length));
+      const currentLineIndex = Math.floor(eased * taglineLines.length);
+      setLineIndex(currentLineIndex);
 
       if (progress < 1) {
         requestAnimationFrame(animate);
       } else {
         setLineIndex(taglineLines.length);
+        if (overlayRef.current) {
+          overlayRef.current.style.transform = "translateX(0%)";
+        }
       }
     };
 
@@ -87,6 +94,23 @@ export default function HeroSection() {
           background:
             "radial-gradient(circle at center, rgba(0,0,0,0.3), rgba(0,0,0,0.85))",
           zIndex: 0,
+        }}
+      />
+
+      {/* Sliding overlay that covers right half of hero section */}
+      <div
+        ref={overlayRef}
+        style={{
+          position: "absolute",
+          top: 0,
+          right: 0,
+          width: "50%",
+          height: "100%",
+          background:
+            "linear-gradient(to left, rgba(10,10,10,0.85) 0%, rgba(26,26,26,0.6) 30%, rgba(40,40,40,0.3) 60%, transparent 100%)",
+          transform: "translateX(100%)",
+          willChange: "transform",
+          zIndex: 1,
         }}
       />
 
@@ -138,22 +162,6 @@ export default function HeroSection() {
               </div>
             ))}
           </div>
-
-          {/* ORIGINAL SLIDING OVERLAY (UNCHANGED LOGIC) */}
-          <div
-            ref={overlayRef}
-            style={{
-              position: "absolute",
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              background:
-                "linear-gradient(135deg, rgba(10,10,10,1), rgba(26,26,26,1))",
-              transform: "translateX(100%)",
-              willChange: "transform",
-            }}
-          />
         </div>
       </div>
     </section>
