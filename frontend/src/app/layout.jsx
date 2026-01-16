@@ -2,7 +2,7 @@ import "./globals.css";
 import ClientRootLayout from "@/components/ClientRootLayout";
 
 export const metadata = {
-  title: "Gabru Look Salon",
+  title: "Gabru Looks Salon",
   description: "Luxury grooming experience in Australia",
 };
 

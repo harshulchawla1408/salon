@@ -373,7 +373,7 @@ export default function Footer() {
           <div className="footer-main">
             <FooterColumn index={0} isVisible={isVisible}>
               <div className="brand-section">
-                <h2 className="brand-name">Gabru Look Salon</h2>
+                <h2 className="brand-name">Gabru Looks Salon</h2>
                 <p className="brand-tagline">
                   Precision Grooming. Personalised Luxury. On Your Time.
                 </p>
@@ -467,7 +467,7 @@ export default function Footer() {
 
           <div className="footer-bottom">
             <p className="copyright">
-              © {currentYear} Gabru Look Salon. All rights reserved.
+              © {currentYear} Gabru Looks Salon. All rights reserved.
             </p>
           </div>
         </div>
