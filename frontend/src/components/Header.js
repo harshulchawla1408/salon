@@ -60,9 +60,9 @@ export default function Header({ onLoginClick, onBookNowClick }) {
 
       <div className="header-right">
         <nav className="nav-links">
-          <a href="#home">Home</a>
-         <Link href="/aboutUs">About Us</Link>
-          <a href="#services">Services</a>
+          <Link href="/">Home</Link>
+          <Link href="/aboutUs">About Us</Link>
+          <Link href="/#services">Services</Link>
           <a href="#shop">E-Shop</a>
           <Link href="/contactUs">Contact</Link>
         </nav>

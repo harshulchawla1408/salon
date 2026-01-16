@@ -125,7 +125,7 @@ export default function ContactUsPage() {
 
   return (
     <>
-      <style jsx>{`
+      <style>{`
         .contact-us-page {
           width: 100%;
           min-height: 100vh;
