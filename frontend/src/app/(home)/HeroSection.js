@@ -133,7 +133,7 @@ export default function HeroSection() {
             textShadow: "0 10px 40px rgba(0,0,0,0.6)",
           }}
         >
-          Gabru Look Salon
+          Gabru Looks Salon
         </h1>
 
         <div
